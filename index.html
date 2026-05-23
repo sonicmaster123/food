@@ -530,26 +530,44 @@
             frozen: '冷冻食品', other: '其他'
         };
 
-        function init() {
-            loadData();
+        async function init() {
+            await loadData();
+            await migrateLocalStorage();
             renderList();
             updateStats();
             checkExpiryNotifications();
             document.getElementById('food-expiry').valueAsDate = new Date(Date.now() + 7 * 86400000);
         }
 
-        function loadData() {
-            const data = localStorage.getItem(STORAGE_KEY);
-            if (data) {
-                foods = JSON.parse(data);
+        async function loadData() {
+            try {
+                const res = await fetch('/api/foods');
+                foods = await res.json();
+            } catch (e) {
+                const data = localStorage.getItem(STORAGE_KEY);
+                if (data) foods = JSON.parse(data);
             }
         }
 
-        function saveData() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(foods));
+        async function migrateLocalStorage() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            const migrated = localStorage.getItem('food_expiry_migrated');
+            if (data && !migrated) {
+                const localFoods = JSON.parse(data);
+                if (localFoods.length > 0) {
+                    await fetch('/api/foods/sync', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(localFoods)
+                    });
+                    const res = await fetch('/api/foods');
+                    foods = await res.json();
+                }
+                localStorage.setItem('food_expiry_migrated', 'true');
+            }
         }
 
-        function addFood() {
+        async function addFood() {
             const nameInput = document.getElementById('food-name');
             const categoryInput = document.getElementById('food-category');
             const expiryInput = document.getElementById('food-expiry');
@@ -578,38 +596,53 @@
                 consumed: false
             };
 
-            foods.push(food);
-            saveData();
-            renderList();
-            updateStats();
-
-            nameInput.value = '';
-            expiryInput.valueAsDate = new Date(Date.now() + 7 * 86400000);
-            nameInput.focus();
-
-            showNotification(`已添加「${name}」`, 'success');
-        }
-
-        function consumeFood(id) {
-            const food = foods.find(f => f.id === id);
-            if (food) {
-                food.consumed = true;
-                food.consumedAt = new Date().toISOString();
-                saveData();
+            try {
+                await fetch('/api/foods', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(food)
+                });
+                foods.push(food);
                 renderList();
                 updateStats();
-                showNotification(`已将「${food.name}」标记为已食用`, 'info');
+                nameInput.value = '';
+                expiryInput.valueAsDate = new Date(Date.now() + 7 * 86400000);
+                nameInput.focus();
+                showNotification(`已添加「${name}」`, 'success');
+            } catch (e) {
+                showNotification('保存失败，请重试', 'error');
             }
         }
 
-        function deleteFood(id) {
+        async function consumeFood(id) {
+            const food = foods.find(f => f.id === id);
+            if (food) {
+                try {
+                    const res = await fetch(`/api/foods/${id}/consume`, { method: 'PUT' });
+                    const data = await res.json();
+                    food.consumed = true;
+                    food.consumedAt = data.consumedAt;
+                    renderList();
+                    updateStats();
+                    showNotification(`已将「${food.name}」标记为已食用`, 'info');
+                } catch (e) {
+                    showNotification('操作失败，请重试', 'error');
+                }
+            }
+        }
+
+        async function deleteFood(id) {
             const food = foods.find(f => f.id === id);
             if (food && confirm(`确定要删除「${food.name}」吗？`)) {
-                foods = foods.filter(f => f.id !== id);
-                saveData();
-                renderList();
-                updateStats();
-                showNotification(`已删除「${food.name}」`, 'warning');
+                try {
+                    await fetch(`/api/foods/${id}`, { method: 'DELETE' });
+                    foods = foods.filter(f => f.id !== id);
+                    renderList();
+                    updateStats();
+                    showNotification(`已删除「${food.name}」`, 'warning');
+                } catch (e) {
+                    showNotification('删除失败，请重试', 'error');
+                }
             }
         }
 
