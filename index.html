@@ -427,10 +427,183 @@
                 flex-wrap: wrap;
             }
         }
+
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+            border-radius: 12px;
+            padding: 12px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .nav-brand {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-tab {
+            padding: 8px 20px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            background: #fff;
+            color: #666;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border-color: #667eea;
+        }
+
+        .nav-tab:hover:not(.active) {
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .pwd-item {
+            display: grid;
+            grid-template-columns: 48px 1fr auto;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1.5px solid #f0f0f0;
+            transition: all 0.2s;
+        }
+
+        .pwd-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .pwd-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+
+        .pwd-icon img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+        }
+
+        .pwd-icon .fallback-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .pwd-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+
+        .pwd-site-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .pwd-username {
+            font-size: 13px;
+            color: #888;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pwd-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .btn-copy {
+            background: #e8f0fe;
+            color: #1a73e8;
+        }
+
+        .btn-copy:hover {
+            background: #1a73e8;
+            color: #fff;
+        }
+
+        .btn-reveal {
+            background: #f3e8ff;
+            color: #764ba2;
+        }
+
+        .btn-reveal:hover {
+            background: #764ba2;
+            color: #fff;
+        }
+
+        .btn-edit {
+            background: #fff3e0;
+            color: #f39c12;
+        }
+
+        .btn-edit:hover {
+            background: #f39c12;
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            .nav-bar {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .pwd-item {
+                grid-template-columns: 40px 1fr;
+                gap: 10px;
+            }
+
+            .pwd-actions {
+                grid-column: 1 / -1;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <nav class="nav-bar">
+            <div class="nav-brand">🏠 生活管家</div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-page="food" onclick="switchPage('food')">🥗 食物管理</button>
+                <button class="nav-tab" data-page="password" onclick="switchPage('password')">🔐 密码管理</button>
+            </div>
+        </nav>
+
+        <div class="page-content" id="page-food">
         <header>
             <h1>🍱 食物有效期管理</h1>
             <p>轻松管理您的食物保质期，减少浪费</p>
@@ -507,6 +680,65 @@
             </div>
             <div class="food-list" id="food-list"></div>
         </div>
+        </div><!-- end page-food -->
+
+        <div class="page-content" id="page-password" style="display:none;">
+            <header>
+                <h1>🔐 密码管理</h1>
+                <p>安全存储和管理您的账号密码</p>
+            </header>
+
+            <div class="stats-bar" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="stat-card total">
+                    <div class="number" id="pwd-stat-total">0</div>
+                    <div class="label">总计账号</div>
+                </div>
+                <div class="stat-card fresh">
+                    <div class="number" id="pwd-stat-domains">0</div>
+                    <div class="label">不同站点</div>
+                </div>
+            </div>
+
+            <div class="add-section">
+                <h2>➕ 添加账号</h2>
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="form-group">
+                        <label>站点/应用名称</label>
+                        <input type="text" id="pwd-site-name" placeholder="例如：GitHub、微信">
+                    </div>
+                    <div class="form-group">
+                        <label>网址/域名</label>
+                        <input type="text" id="pwd-domain" placeholder="例如：github.com">
+                    </div>
+                    <div class="form-group">
+                        <label>用户名/邮箱</label>
+                        <input type="text" id="pwd-username" placeholder="例如：user@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" id="pwd-password" placeholder="输入密码">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>备注</label>
+                        <input type="text" id="pwd-notes" placeholder="可选备注信息">
+                    </div>
+                </div>
+                <div style="margin-top: 12px; display: flex; gap: 8px;">
+                    <button class="btn-add" onclick="savePassword()">保存</button>
+                    <button class="btn-add" style="background: #eee; color: #666;" onclick="cancelEditPassword()" id="btn-cancel-pwd" hidden>取消编辑</button>
+                </div>
+            </div>
+
+            <div class="list-section">
+                <div class="list-header">
+                    <h2>📋 账号列表</h2>
+                    <div class="toolbar">
+                        <input type="text" class="search-box" id="pwd-search-input" placeholder="搜索账号..." oninput="renderPasswordList()">
+                    </div>
+                </div>
+                <div class="food-list" id="password-list"></div>
+            </div>
+        </div><!-- end page-password -->
     </div>
 
     <div class="notification" id="notification"></div>
@@ -799,6 +1031,253 @@
         });
 
         init();
+
+        // Page Navigation
+        function switchPage(page) {
+            document.querySelectorAll('.page-content').forEach(el => el.style.display = 'none');
+            document.getElementById('page-' + page).style.display = 'block';
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.page === page);
+            });
+            if (page === 'password') loadPasswords();
+        }
+
+        // Password Manager
+        let passwords = [];
+        let editingPasswordId = null;
+
+        const appDomainMap = {
+            '微信': 'weixin.qq.com', 'wechat': 'weixin.qq.com',
+            '支付宝': 'alipay.com', '淘宝': 'taobao.com',
+            '京东': 'jd.com', '抖音': 'douyin.com',
+            '百度': 'baidu.com', 'qq': 'qq.com',
+            '微博': 'weibo.com', '哔哩哔哩': 'bilibili.com',
+            'bilibili': 'bilibili.com', '知乎': 'zhihu.com',
+            '美团': 'meituan.com', '饿了么': 'ele.me',
+            '网易': '163.com', '拼多多': 'pinduoduo.com',
+            '小红书': 'xiaohongshu.com', 'github': 'github.com',
+            'google': 'google.com', 'gmail': 'gmail.com',
+            'facebook': 'facebook.com', 'twitter': 'twitter.com',
+            'instagram': 'instagram.com', 'apple': 'apple.com',
+            'microsoft': 'microsoft.com', 'amazon': 'amazon.com',
+            'netflix': 'netflix.com', 'spotify': 'spotify.com',
+            'steam': 'store.steampowered.com', 'discord': 'discord.com'
+        };
+
+        function resolveDomain(item) {
+            let domain = item.domain;
+            if (!domain) {
+                const lowerName = item.siteName.toLowerCase();
+                domain = appDomainMap[lowerName] || appDomainMap[item.siteName];
+            }
+            if (!domain && item.username && item.username.includes('@')) {
+                domain = item.username.split('@')[1];
+            }
+            if (domain) {
+                domain = domain.replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '');
+            }
+            return domain || null;
+        }
+
+        function getIconForPassword(item) {
+            const domain = resolveDomain(item);
+            const char = item.siteName.charAt(0).toUpperCase();
+            if (domain) {
+                return `<img src="https://${domain}/favicon.ico" onerror="handleIconError(this, '${encodeURIComponent(domain)}', '${char}')" alt="">`;
+            }
+            return `<div class="fallback-icon">${char}</div>`;
+        }
+
+        function handleIconError(img, domain, char) {
+            const decodedDomain = decodeURIComponent(domain);
+            if (!img.dataset.tried) {
+                img.dataset.tried = '1';
+                img.src = 'https://favicon.cccyun.cc/' + decodedDomain;
+            } else {
+                img.parentElement.innerHTML = '<div class="fallback-icon">' + char + '</div>';
+            }
+        }
+
+        async function loadPasswords() {
+            try {
+                const res = await fetch('/api/passwords');
+                passwords = await res.json();
+                renderPasswordList();
+                updatePasswordStats();
+            } catch (e) {
+                showNotification('加载密码列表失败', 'error');
+            }
+        }
+
+        function updatePasswordStats() {
+            document.getElementById('pwd-stat-total').textContent = passwords.length;
+            const domains = new Set(passwords.map(p => p.domain).filter(Boolean));
+            document.getElementById('pwd-stat-domains').textContent = domains.size;
+        }
+
+        function renderPasswordList() {
+            const list = document.getElementById('password-list');
+            const search = document.getElementById('pwd-search-input').value.trim().toLowerCase();
+
+            let filtered = passwords;
+            if (search) {
+                filtered = passwords.filter(p =>
+                    p.siteName.toLowerCase().includes(search) ||
+                    p.username.toLowerCase().includes(search) ||
+                    (p.domain && p.domain.toLowerCase().includes(search))
+                );
+            }
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔐</div>
+                        <p>暂无保存的密码</p>
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = filtered.map(item => `
+                <div class="pwd-item">
+                    <div class="pwd-icon">${getIconForPassword(item)}</div>
+                    <div class="pwd-info">
+                        <div class="pwd-site-name">${escapeHtml(item.siteName)}</div>
+                        <div class="pwd-username">${escapeHtml(item.username)}${item.domain ? ' · ' + escapeHtml(item.domain) : ''}</div>
+                    </div>
+                    <div class="pwd-actions">
+                        <button class="btn-action btn-copy" onclick="copyPassword(${item.id})">📋 复制</button>
+                        <button class="btn-action btn-reveal" onclick="revealPassword(${item.id}, this)">👁 查看</button>
+                        <button class="btn-action btn-edit" onclick="editPassword(${item.id})">✏️ 编辑</button>
+                        <button class="btn-action btn-delete" onclick="deletePassword(${item.id})">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function savePassword() {
+            const siteName = document.getElementById('pwd-site-name').value.trim();
+            const domain = document.getElementById('pwd-domain').value.trim();
+            const username = document.getElementById('pwd-username').value.trim();
+            const password = document.getElementById('pwd-password').value;
+            const notes = document.getElementById('pwd-notes').value.trim();
+
+            if (!siteName) { showNotification('请输入站点名称', 'error'); return; }
+            if (!username) { showNotification('请输入用户名', 'error'); return; }
+            if (!password && !editingPasswordId) { showNotification('请输入密码', 'error'); return; }
+
+            const body = { siteName, domain, username, password, notes };
+
+            try {
+                if (editingPasswordId) {
+                    const res = await fetch(`/api/passwords/${editingPasswordId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    if (!res.ok) throw new Error('Server error');
+                    const idx = passwords.findIndex(p => p.id === editingPasswordId);
+                    if (idx !== -1) {
+                        passwords[idx].siteName = siteName;
+                        passwords[idx].domain = domain || null;
+                        passwords[idx].username = username;
+                        passwords[idx].notes = notes || null;
+                    }
+                    showNotification('密码已更新', 'success');
+                } else {
+                    const res = await fetch('/api/passwords', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    if (!res.ok) throw new Error('Server error');
+                    const data = await res.json();
+                    passwords.push({
+                        id: data.id,
+                        siteName,
+                        domain: domain || null,
+                        username,
+                        notes: notes || null
+                    });
+                    showNotification(`已保存「${siteName}」的密码`, 'success');
+                }
+                cancelEditPassword();
+                renderPasswordList();
+                updatePasswordStats();
+            } catch (e) {
+                showNotification('保存失败，请重试', 'error');
+            }
+        }
+
+        function editPassword(id) {
+            const item = passwords.find(p => p.id === id);
+            if (!item) return;
+
+            editingPasswordId = id;
+            document.getElementById('pwd-site-name').value = item.siteName;
+            document.getElementById('pwd-domain').value = item.domain || '';
+            document.getElementById('pwd-username').value = item.username;
+            document.getElementById('pwd-password').value = '';
+            document.getElementById('pwd-password').placeholder = '留空则不修改';
+            document.getElementById('pwd-notes').value = item.notes || '';
+            document.getElementById('btn-cancel-pwd').hidden = false;
+            document.getElementById('pwd-site-name').focus();
+        }
+
+        function cancelEditPassword() {
+            editingPasswordId = null;
+            document.getElementById('pwd-site-name').value = '';
+            document.getElementById('pwd-domain').value = '';
+            document.getElementById('pwd-username').value = '';
+            document.getElementById('pwd-password').value = '';
+            document.getElementById('pwd-password').placeholder = '输入密码';
+            document.getElementById('pwd-notes').value = '';
+            document.getElementById('btn-cancel-pwd').hidden = true;
+        }
+
+        async function copyPassword(id) {
+            try {
+                const res = await fetch(`/api/passwords/${id}/reveal`);
+                const data = await res.json();
+                await navigator.clipboard.writeText(data.password);
+                showNotification('密码已复制到剪贴板', 'success');
+            } catch (e) {
+                showNotification('复制失败', 'error');
+            }
+        }
+
+        async function revealPassword(id, btn) {
+            try {
+                const res = await fetch(`/api/passwords/${id}/reveal`);
+                const data = await res.json();
+                const originalText = btn.textContent;
+                btn.textContent = data.password;
+                btn.style.fontFamily = 'monospace';
+                btn.style.fontSize = '11px';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.fontFamily = '';
+                    btn.style.fontSize = '';
+                }, 3000);
+            } catch (e) {
+                showNotification('查看密码失败', 'error');
+            }
+        }
+
+        async function deletePassword(id) {
+            const item = passwords.find(p => p.id === id);
+            if (item && confirm(`确定要删除「${item.siteName}」的密码吗？`)) {
+                try {
+                    const res = await fetch(`/api/passwords/${id}`, { method: 'DELETE' });
+                    if (!res.ok) throw new Error('Server error');
+                    passwords = passwords.filter(p => p.id !== id);
+                    renderPasswordList();
+                    updatePasswordStats();
+                    showNotification(`已删除「${item.siteName}」`, 'warning');
+                } catch (e) {
+                    showNotification('删除失败', 'error');
+                }
+            }
+        }
     </script>
 </body>
 </html>
