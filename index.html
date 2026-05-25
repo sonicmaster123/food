@@ -576,6 +576,16 @@
             color: #fff;
         }
 
+        .btn-approve {
+            background: #e8f8f0;
+            color: #27ae60;
+        }
+
+        .btn-approve:hover {
+            background: #27ae60;
+            color: #fff;
+        }
+
         @media (max-width: 768px) {
             .nav-bar {
                 flex-direction: column;
@@ -591,15 +601,225 @@
                 grid-column: 1 / -1;
             }
         }
+
+        /* Login page styles */
+        .login-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+        }
+
+        .login-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-box h1 {
+            text-align: center;
+            font-size: 24px;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+
+        .login-box p {
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .login-box .form-group {
+            margin-bottom: 16px;
+        }
+
+        .login-box .form-group input {
+            width: 100%;
+        }
+
+        .login-box .btn-add {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .login-toggle {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        .login-toggle a {
+            color: #667eea;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .login-toggle a:hover {
+            text-decoration: underline;
+        }
+
+        .login-error {
+            background: #fde8e8;
+            color: #e74c3c;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-user {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .btn-logout {
+            padding: 6px 14px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            background: #fff;
+            color: #e74c3c;
+            transition: all 0.2s;
+        }
+
+        .btn-logout:hover {
+            background: #e74c3c;
+            color: #fff;
+            border-color: #e74c3c;
+        }
+
+        /* User management styles */
+        .user-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1.5px solid #f0f0f0;
+            transition: all 0.2s;
+        }
+
+        .user-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .user-item.pending {
+            border-left: 4px solid #f39c12;
+            background: #fffbf0;
+        }
+
+        .user-item.approved {
+            border-left: 4px solid #27ae60;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .user-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-meta {
+            font-size: 12px;
+            color: #888;
+            display: flex;
+            gap: 12px;
+        }
+
+        .user-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .user-item {
+                grid-template-columns: auto 1fr;
+                gap: 10px;
+            }
+            .user-status, .user-actions {
+                grid-column: 2;
+            }
+            .nav-right {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Page -->
+    <div class="container login-page" id="login-page">
+        <div class="login-box">
+            <h1>🏠 生活管家</h1>
+            <p id="login-subtitle">请登录以继续</p>
+            <div class="login-error" id="login-error"></div>
+            <div class="form-group">
+                <label>用户名</label>
+                <input type="text" id="login-username" placeholder="请输入用户名">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="login-password" placeholder="请输入密码">
+            </div>
+            <button class="btn-add" id="login-btn" onclick="handleLogin()">登录</button>
+            <div class="login-toggle" id="login-toggle">
+                没有账号？<a onclick="toggleRegister()">注册</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="container" id="main-app" style="display:none;">
         <nav class="nav-bar">
             <div class="nav-brand">🏠 生活管家</div>
-            <div class="nav-tabs">
+            <div class="nav-tabs" id="nav-tabs">
                 <button class="nav-tab active" data-page="food" onclick="switchPage('food')">🥗 食物管理</button>
                 <button class="nav-tab" data-page="password" onclick="switchPage('password')">🔐 密码管理</button>
+                <button class="nav-tab" data-page="users" onclick="switchPage('users')" id="nav-users" style="display:none;">👥 用户管理</button>
+            </div>
+            <div class="nav-right">
+                <span class="nav-user" id="nav-username"></span>
+                <button class="btn-logout" onclick="handleLogout()">退出</button>
             </div>
         </nav>
 
@@ -739,6 +959,57 @@
                 <div class="food-list" id="password-list"></div>
             </div>
         </div><!-- end page-password -->
+
+        <div class="page-content" id="page-users" style="display:none;">
+            <header>
+                <h1>👥 用户管理</h1>
+                <p>管理系统用户，审批新注册用户</p>
+            </header>
+
+            <div class="stats-bar" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card total">
+                    <div class="number" id="user-stat-total">0</div>
+                    <div class="label">总用户数</div>
+                </div>
+                <div class="stat-card fresh">
+                    <div class="number" id="user-stat-approved">0</div>
+                    <div class="label">已通过</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="number" id="user-stat-pending">0</div>
+                    <div class="label">待审批</div>
+                </div>
+            </div>
+
+            <div class="add-section">
+                <h2>➕ 添加用户</h2>
+                <div class="form-grid" style="grid-template-columns: 1fr 1fr 1fr auto;">
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <input type="text" id="user-add-username" placeholder="输入用户名">
+                    </div>
+                    <div class="form-group">
+                        <label>密码</label>
+                        <input type="password" id="user-add-password" placeholder="输入密码">
+                    </div>
+                    <div class="form-group">
+                        <label>角色</label>
+                        <select id="user-add-role">
+                            <option value="user">普通用户</option>
+                            <option value="admin">管理员</option>
+                        </select>
+                    </div>
+                    <button class="btn-add" onclick="addUser()">添加</button>
+                </div>
+            </div>
+
+            <div class="list-section">
+                <div class="list-header">
+                    <h2>📋 用户列表</h2>
+                </div>
+                <div class="food-list" id="user-list"></div>
+            </div>
+        </div><!-- end page-users -->
     </div>
 
     <div class="notification" id="notification"></div>
@@ -749,6 +1020,8 @@
 
         let foods = [];
         let currentFilter = 'all';
+        let authToken = localStorage.getItem('auth_token');
+        let currentUser = null;
 
         const categoryIcons = {
             dairy: '🥛', meat: '🥩', vegetable: '🥬', fruit: '🍎',
@@ -762,6 +1035,117 @@
             frozen: '冷冻食品', other: '其他'
         };
 
+        function authHeaders() {
+            return { 'Content-Type': 'application/json', 'Authorization': authToken };
+        }
+
+        // Auth
+        let isRegisterMode = false;
+
+        function toggleRegister() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('login-subtitle').textContent = isRegisterMode ? '创建新账号' : '请登录以继续';
+            document.getElementById('login-btn').textContent = isRegisterMode ? '注册' : '登录';
+            document.getElementById('login-toggle').innerHTML = isRegisterMode
+                ? '已有账号？<a onclick="toggleRegister()">登录</a>'
+                : '没有账号？<a onclick="toggleRegister()">注册</a>';
+            document.getElementById('login-error').style.display = 'none';
+        }
+
+        async function handleLogin() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const errorEl = document.getElementById('login-error');
+
+            if (!username || !password) {
+                errorEl.textContent = '请输入用户名和密码';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const url = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    errorEl.textContent = data.error || '操作失败';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+
+                if (isRegisterMode) {
+                    errorEl.style.display = 'none';
+                    showNotification('注册成功，请等待管理员审批后登录', 'success', 5000);
+                    toggleRegister();
+                    document.getElementById('login-username').value = '';
+                    document.getElementById('login-password').value = '';
+                } else {
+                    authToken = data.token;
+                    currentUser = { username: data.username, role: data.role };
+                    localStorage.setItem('auth_token', authToken);
+                    showApp();
+                }
+            } catch (e) {
+                errorEl.textContent = '网络错误，请重试';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        function handleLogout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('auth_token');
+            document.getElementById('main-app').style.display = 'none';
+            document.getElementById('login-page').style.display = 'flex';
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            document.getElementById('login-error').style.display = 'none';
+        }
+
+        async function checkAuth() {
+            if (!authToken) {
+                document.getElementById('login-page').style.display = 'flex';
+                return;
+            }
+            try {
+                const res = await fetch('/api/auth/me', { headers: { 'Authorization': authToken } });
+                if (!res.ok) {
+                    handleLogout();
+                    return;
+                }
+                const data = await res.json();
+                currentUser = { username: data.username, role: data.role };
+                showApp();
+            } catch (e) {
+                handleLogout();
+            }
+        }
+
+        function showApp() {
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            document.getElementById('nav-username').textContent = currentUser.username;
+            if (currentUser.role === 'admin') {
+                document.getElementById('nav-users').style.display = '';
+            } else {
+                document.getElementById('nav-users').style.display = 'none';
+            }
+            init();
+        }
+
+        // Login page keyboard support
+        document.getElementById('login-username').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') document.getElementById('login-password').focus();
+        });
+        document.getElementById('login-password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') handleLogin();
+        });
+
         async function init() {
             await loadData();
             await migrateLocalStorage();
@@ -773,7 +1157,8 @@
 
         async function loadData() {
             try {
-                const res = await fetch('/api/foods');
+                const res = await fetch('/api/foods', { headers: authHeaders() });
+                if (!res.ok) throw new Error('Unauthorized');
                 foods = await res.json();
             } catch (e) {
                 const data = localStorage.getItem(STORAGE_KEY);
@@ -789,10 +1174,10 @@
                 if (localFoods.length > 0) {
                     await fetch('/api/foods/sync', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: authHeaders(),
                         body: JSON.stringify(localFoods)
                     });
-                    const res = await fetch('/api/foods');
+                    const res = await fetch('/api/foods', { headers: authHeaders() });
                     foods = await res.json();
                 }
                 localStorage.setItem('food_expiry_migrated', 'true');
@@ -831,7 +1216,7 @@
             try {
                 await fetch('/api/foods', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders(),
                     body: JSON.stringify(food)
                 });
                 foods.push(food);
@@ -850,7 +1235,7 @@
             const food = foods.find(f => f.id === id);
             if (food) {
                 try {
-                    const res = await fetch(`/api/foods/${id}/consume`, { method: 'PUT' });
+                    const res = await fetch(`/api/foods/${id}/consume`, { method: 'PUT', headers: authHeaders() });
                     const data = await res.json();
                     food.consumed = true;
                     food.consumedAt = data.consumedAt;
@@ -867,7 +1252,7 @@
             const food = foods.find(f => f.id === id);
             if (food && confirm(`确定要删除「${food.name}」吗？`)) {
                 try {
-                    await fetch(`/api/foods/${id}`, { method: 'DELETE' });
+                    await fetch(`/api/foods/${id}`, { method: 'DELETE', headers: authHeaders() });
                     foods = foods.filter(f => f.id !== id);
                     renderList();
                     updateStats();
@@ -1030,8 +1415,6 @@
             if (e.key === 'Enter') addFood();
         });
 
-        init();
-
         // Page Navigation
         function switchPage(page) {
             document.querySelectorAll('.page-content').forEach(el => el.style.display = 'none');
@@ -1040,6 +1423,7 @@
                 tab.classList.toggle('active', tab.dataset.page === page);
             });
             if (page === 'password') loadPasswords();
+            if (page === 'users') loadUsers();
         }
 
         // Password Manager
@@ -1100,7 +1484,7 @@
 
         async function loadPasswords() {
             try {
-                const res = await fetch('/api/passwords');
+                const res = await fetch('/api/passwords', { headers: authHeaders() });
                 passwords = await res.json();
                 renderPasswordList();
                 updatePasswordStats();
@@ -1171,7 +1555,7 @@
                 if (editingPasswordId) {
                     const res = await fetch(`/api/passwords/${editingPasswordId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: authHeaders(),
                         body: JSON.stringify(body)
                     });
                     if (!res.ok) throw new Error('Server error');
@@ -1186,7 +1570,7 @@
                 } else {
                     const res = await fetch('/api/passwords', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: authHeaders(),
                         body: JSON.stringify(body)
                     });
                     if (!res.ok) throw new Error('Server error');
@@ -1236,7 +1620,7 @@
 
         async function copyPassword(id) {
             try {
-                const res = await fetch(`/api/passwords/${id}/reveal`);
+                const res = await fetch(`/api/passwords/${id}/reveal`, { headers: authHeaders() });
                 const data = await res.json();
                 await navigator.clipboard.writeText(data.password);
                 showNotification('密码已复制到剪贴板', 'success');
@@ -1247,7 +1631,7 @@
 
         async function revealPassword(id, btn) {
             try {
-                const res = await fetch(`/api/passwords/${id}/reveal`);
+                const res = await fetch(`/api/passwords/${id}/reveal`, { headers: authHeaders() });
                 const data = await res.json();
                 const originalText = btn.textContent;
                 btn.textContent = data.password;
@@ -1267,7 +1651,7 @@
             const item = passwords.find(p => p.id === id);
             if (item && confirm(`确定要删除「${item.siteName}」的密码吗？`)) {
                 try {
-                    const res = await fetch(`/api/passwords/${id}`, { method: 'DELETE' });
+                    const res = await fetch(`/api/passwords/${id}`, { method: 'DELETE', headers: authHeaders() });
                     if (!res.ok) throw new Error('Server error');
                     passwords = passwords.filter(p => p.id !== id);
                     renderPasswordList();
@@ -1278,6 +1662,138 @@
                 }
             }
         }
+
+        // User Management
+        let users = [];
+
+        async function loadUsers() {
+            try {
+                const res = await fetch('/api/users', { headers: authHeaders() });
+                if (!res.ok) throw new Error('No permission');
+                users = await res.json();
+                renderUserList();
+                updateUserStats();
+            } catch (e) {
+                showNotification('加载用户列表失败', 'error');
+            }
+        }
+
+        function updateUserStats() {
+            const total = users.length;
+            const approved = users.filter(u => u.approved).length;
+            const pending = total - approved;
+            document.getElementById('user-stat-total').textContent = total;
+            document.getElementById('user-stat-approved').textContent = approved;
+            document.getElementById('user-stat-pending').textContent = pending;
+        }
+
+        function renderUserList() {
+            const list = document.getElementById('user-list');
+
+            if (users.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">👥</div>
+                        <p>暂无用户</p>
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = users.map(user => {
+                const initial = user.username.charAt(0).toUpperCase();
+                const statusClass = user.approved ? 'approved' : 'pending';
+                const statusText = user.approved ? '已通过' : '待审批';
+                const badgeClass = user.approved ? 'badge-fresh' : 'badge-warning';
+                const roleText = user.role === 'admin' ? '管理员' : '普通用户';
+                const createdAt = user.created_at ? user.created_at.slice(0, 10) : '';
+
+                return `
+                    <div class="user-item ${statusClass}">
+                        <div class="user-avatar">${initial}</div>
+                        <div class="user-info">
+                            <div class="user-name">${escapeHtml(user.username)}</div>
+                            <div class="user-meta">
+                                <span>${roleText}</span>
+                                <span>注册：${createdAt}</span>
+                            </div>
+                        </div>
+                        <div class="user-status">
+                            <span class="status-badge ${badgeClass}">${statusText}</span>
+                        </div>
+                        <div class="user-actions">
+                            ${!user.approved ? `<button class="btn-action btn-approve" onclick="approveUser(${user.id})">✓ 通过</button>` : ''}
+                            <button class="btn-action btn-delete" onclick="deleteUser(${user.id}, '${escapeHtml(user.username)}')">删除</button>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        async function addUser() {
+            const username = document.getElementById('user-add-username').value.trim();
+            const password = document.getElementById('user-add-password').value;
+            const role = document.getElementById('user-add-role').value;
+
+            if (!username) { showNotification('请输入用户名', 'error'); return; }
+            if (!password) { showNotification('请输入密码', 'error'); return; }
+            if (password.length < 6) { showNotification('密码长度不能少于6位', 'error'); return; }
+
+            try {
+                const res = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ username, password, role })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showNotification(data.error || '添加失败', 'error');
+                    return;
+                }
+                users.unshift({ id: data.id, username: data.username, role: data.role, approved: data.approved, created_at: new Date().toISOString() });
+                renderUserList();
+                updateUserStats();
+                document.getElementById('user-add-username').value = '';
+                document.getElementById('user-add-password').value = '';
+                document.getElementById('user-add-role').value = 'user';
+                showNotification(`已添加用户「${username}」`, 'success');
+            } catch (e) {
+                showNotification('添加用户失败', 'error');
+            }
+        }
+
+        async function approveUser(id) {
+            try {
+                const res = await fetch(`/api/users/${id}/approve`, { method: 'PUT', headers: authHeaders() });
+                if (!res.ok) throw new Error('Failed');
+                const user = users.find(u => u.id === id);
+                if (user) user.approved = 1;
+                renderUserList();
+                updateUserStats();
+                showNotification('用户已审批通过', 'success');
+            } catch (e) {
+                showNotification('审批失败', 'error');
+            }
+        }
+
+        async function deleteUser(id, username) {
+            if (!confirm(`确定要删除用户「${username}」吗？`)) return;
+            try {
+                const res = await fetch(`/api/users/${id}`, { method: 'DELETE', headers: authHeaders() });
+                const data = await res.json();
+                if (!res.ok) {
+                    showNotification(data.error || '删除失败', 'error');
+                    return;
+                }
+                users = users.filter(u => u.id !== id);
+                renderUserList();
+                updateUserStats();
+                showNotification(`已删除用户「${username}」`, 'warning');
+            } catch (e) {
+                showNotification('删除失败', 'error');
+            }
+        }
+
+        // Start app
+        checkAuth();
     </script>
 </body>
 </html>
