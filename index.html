@@ -1100,6 +1100,8 @@
             authToken = null;
             currentUser = null;
             localStorage.removeItem('auth_token');
+            passwords = [];
+            editingPasswordId = null;
             document.getElementById('main-app').style.display = 'none';
             document.getElementById('login-page').style.display = 'flex';
             document.getElementById('login-username').value = '';
@@ -1127,6 +1129,8 @@
         }
 
         function showApp() {
+            passwords = [];
+            editingPasswordId = null;
             document.getElementById('login-page').style.display = 'none';
             document.getElementById('main-app').style.display = 'block';
             document.getElementById('nav-username').textContent = currentUser.username;
@@ -1135,6 +1139,7 @@
             } else {
                 document.getElementById('nav-users').style.display = 'none';
             }
+            switchPage('food');
             init();
         }
 
@@ -1508,7 +1513,8 @@
                 filtered = passwords.filter(p =>
                     p.siteName.toLowerCase().includes(search) ||
                     p.username.toLowerCase().includes(search) ||
-                    (p.domain && p.domain.toLowerCase().includes(search))
+                    (p.domain && p.domain.toLowerCase().includes(search)) ||
+                    (p.ownerName && p.ownerName.toLowerCase().includes(search))
                 );
             }
 
@@ -1521,12 +1527,13 @@
                 return;
             }
 
+            const isAdmin = currentUser && currentUser.role === 'admin';
             list.innerHTML = filtered.map(item => `
                 <div class="pwd-item">
                     <div class="pwd-icon">${getIconForPassword(item)}</div>
                     <div class="pwd-info">
                         <div class="pwd-site-name">${escapeHtml(item.siteName)}</div>
-                        <div class="pwd-username">${escapeHtml(item.username)}${item.domain ? ' · ' + escapeHtml(item.domain) : ''}</div>
+                        <div class="pwd-username">${escapeHtml(item.username)}${item.domain ? ' · ' + escapeHtml(item.domain) : ''}${isAdmin && item.ownerName ? ' · 👤' + escapeHtml(item.ownerName) : ''}</div>
                     </div>
                     <div class="pwd-actions">
                         <button class="btn-action btn-copy" onclick="copyPassword(${item.id})">📋 复制</button>
@@ -1558,6 +1565,7 @@
                         headers: authHeaders(),
                         body: JSON.stringify(body)
                     });
+                    if (res.status === 403) { showNotification('无权限修改此密码', 'error'); return; }
                     if (!res.ok) throw new Error('Server error');
                     const idx = passwords.findIndex(p => p.id === editingPasswordId);
                     if (idx !== -1) {
@@ -1580,7 +1588,8 @@
                         siteName,
                         domain: domain || null,
                         username,
-                        notes: notes || null
+                        notes: notes || null,
+                        ownerName: data.ownerName || (currentUser ? currentUser.username : null)
                     });
                     showNotification(`已保存「${siteName}」的密码`, 'success');
                 }
@@ -1652,6 +1661,7 @@
             if (item && confirm(`确定要删除「${item.siteName}」的密码吗？`)) {
                 try {
                     const res = await fetch(`/api/passwords/${id}`, { method: 'DELETE', headers: authHeaders() });
+                    if (res.status === 403) { showNotification('无权限删除此密码', 'error'); return; }
                     if (!res.ok) throw new Error('Server error');
                     passwords = passwords.filter(p => p.id !== id);
                     renderPasswordList();

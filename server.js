@@ -294,9 +294,21 @@ app.post('/api/foods/sync', authMiddleware, async (req, res) => {
 // Password Manager API
 app.get('/api/passwords', authMiddleware, async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM passwords ORDER BY site_name ASC');
+        let rows;
+        if (req.user.role === 'admin') {
+            [rows] = await pool.query(
+                'SELECT p.*, u.username AS owner_name FROM passwords p LEFT JOIN users u ON p.user_id = u.id ORDER BY p.site_name ASC'
+            );
+        } else {
+            [rows] = await pool.query(
+                'SELECT * FROM passwords WHERE user_id = ? ORDER BY site_name ASC',
+                [req.user.id]
+            );
+        }
         const passwords = rows.map(row => ({
             id: row.id,
+            userId: row.user_id,
+            ownerName: row.owner_name || null,
             siteName: row.site_name,
             domain: row.domain,
             username: row.username,
@@ -312,8 +324,11 @@ app.get('/api/passwords', authMiddleware, async (req, res) => {
 
 app.get('/api/passwords/:id/reveal', authMiddleware, async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT password_encrypted FROM passwords WHERE id = ?', [req.params.id]);
+        const [rows] = await pool.query('SELECT password_encrypted, user_id FROM passwords WHERE id = ?', [req.params.id]);
         if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+        if (req.user.role !== 'admin' && rows[0].user_id !== req.user.id) {
+            return res.status(403).json({ error: '无权限' });
+        }
         const plaintext = decrypt(rows[0].password_encrypted);
         res.json({ password: plaintext });
     } catch (err) {
@@ -326,10 +341,10 @@ app.post('/api/passwords', authMiddleware, async (req, res) => {
         const { siteName, domain, username, password, notes } = req.body;
         const encrypted = encrypt(password);
         const [result] = await pool.query(
-            'INSERT INTO passwords (site_name, domain, username, password_encrypted, notes) VALUES (?, ?, ?, ?, ?)',
-            [siteName, domain || null, username, encrypted, notes || null]
+            'INSERT INTO passwords (user_id, site_name, domain, username, password_encrypted, notes) VALUES (?, ?, ?, ?, ?, ?)',
+            [req.user.id, siteName, domain || null, username, encrypted, notes || null]
         );
-        res.status(201).json({ id: result.insertId, siteName, domain, username, notes });
+        res.status(201).json({ id: result.insertId, siteName, domain, username, notes, userId: req.user.id, ownerName: req.user.username });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -337,6 +352,11 @@ app.post('/api/passwords', authMiddleware, async (req, res) => {
 
 app.put('/api/passwords/:id', authMiddleware, async (req, res) => {
     try {
+        const [existing] = await pool.query('SELECT user_id FROM passwords WHERE id = ?', [req.params.id]);
+        if (existing.length === 0) return res.status(404).json({ error: 'Not found' });
+        if (req.user.role !== 'admin' && existing[0].user_id !== req.user.id) {
+            return res.status(403).json({ error: '无权限' });
+        }
         const { siteName, domain, username, password, notes } = req.body;
         const fields = ['site_name = ?', 'domain = ?', 'username = ?', 'notes = ?'];
         const values = [siteName, domain || null, username, notes || null];
@@ -354,6 +374,11 @@ app.put('/api/passwords/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/passwords/:id', authMiddleware, async (req, res) => {
     try {
+        const [existing] = await pool.query('SELECT user_id FROM passwords WHERE id = ?', [req.params.id]);
+        if (existing.length === 0) return res.status(404).json({ error: 'Not found' });
+        if (req.user.role !== 'admin' && existing[0].user_id !== req.user.id) {
+            return res.status(403).json({ error: '无权限' });
+        }
         await pool.query('DELETE FROM passwords WHERE id = ?', [req.params.id]);
         res.json({ success: true });
     } catch (err) {
@@ -375,13 +400,28 @@ async function initDB() {
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         `);
         const [rows] = await pool.query('SELECT id FROM users WHERE username = ?', ['admin']);
+        let adminId;
         if (rows.length === 0) {
             const hash = await bcrypt.hash('zhangxiang123', 10);
-            await pool.query(
+            const [result] = await pool.query(
                 'INSERT INTO users (username, password_hash, role, approved) VALUES (?, ?, ?, 1)',
                 ['admin', hash, 'admin']
             );
+            adminId = result.insertId;
             console.log('Admin user created: admin / zhangxiang123');
+        } else {
+            adminId = rows[0].id;
+        }
+
+        // Migrate passwords table: add user_id column if not exists
+        const [cols] = await pool.query(
+            "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'food_expiry' AND TABLE_NAME = 'passwords' AND COLUMN_NAME = 'user_id'"
+        );
+        if (cols.length === 0) {
+            await pool.query('ALTER TABLE passwords ADD COLUMN user_id INT NOT NULL DEFAULT ? AFTER id', [adminId]);
+            await pool.query('ALTER TABLE passwords ALTER COLUMN user_id DROP DEFAULT');
+            await pool.query('ALTER TABLE passwords ADD INDEX idx_user_id (user_id)');
+            console.log('Migrated passwords table: added user_id column');
         }
     } catch (err) {
         console.error('Failed to initialize database:', err.message);
