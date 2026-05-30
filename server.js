@@ -386,6 +386,91 @@ app.delete('/api/passwords/:id', authMiddleware, async (req, res) => {
     }
 });
 
+// Notes API
+app.get('/api/notes', authMiddleware, async (req, res) => {
+    try {
+        let rows;
+        if (req.user.role === 'admin') {
+            [rows] = await pool.query(
+                'SELECT n.*, u.username AS owner_name FROM notes n LEFT JOIN users u ON n.user_id = u.id ORDER BY n.created_at DESC'
+            );
+        } else {
+            [rows] = await pool.query(
+                'SELECT * FROM notes WHERE user_id = ? ORDER BY created_at DESC',
+                [req.user.id]
+            );
+        }
+        const notes = rows.map(row => ({
+            id: row.id,
+            userId: row.user_id,
+            ownerName: row.owner_name || null,
+            content: row.content,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        }));
+        res.json(notes);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/notes', authMiddleware, async (req, res) => {
+    try {
+        const { content } = req.body;
+        if (!content || !content.trim()) {
+            return res.status(400).json({ error: '内容不能为空' });
+        }
+        const [result] = await pool.query(
+            'INSERT INTO notes (user_id, content) VALUES (?, ?)',
+            [req.user.id, content.trim()]
+        );
+        const [rows] = await pool.query('SELECT * FROM notes WHERE id = ?', [result.insertId]);
+        const row = rows[0];
+        res.status(201).json({
+            id: row.id,
+            userId: row.user_id,
+            ownerName: req.user.username,
+            content: row.content,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/notes/:id', authMiddleware, async (req, res) => {
+    try {
+        const [existing] = await pool.query('SELECT user_id FROM notes WHERE id = ?', [req.params.id]);
+        if (existing.length === 0) return res.status(404).json({ error: 'Not found' });
+        if (req.user.role !== 'admin' && existing[0].user_id !== req.user.id) {
+            return res.status(403).json({ error: '无权限' });
+        }
+        const { content } = req.body;
+        if (!content || !content.trim()) {
+            return res.status(400).json({ error: '内容不能为空' });
+        }
+        await pool.query('UPDATE notes SET content = ? WHERE id = ?', [content.trim(), req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/notes/:id', authMiddleware, async (req, res) => {
+    try {
+        const [existing] = await pool.query('SELECT user_id FROM notes WHERE id = ?', [req.params.id]);
+        if (existing.length === 0) return res.status(404).json({ error: 'Not found' });
+        if (req.user.role !== 'admin' && existing[0].user_id !== req.user.id) {
+            return res.status(403).json({ error: '无权限' });
+        }
+        await pool.query('DELETE FROM notes WHERE id = ?', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Initialize admin user and users table
 async function initDB() {
     try {
@@ -423,6 +508,19 @@ async function initDB() {
             await pool.query('ALTER TABLE passwords ADD INDEX idx_user_id (user_id)');
             console.log('Migrated passwords table: added user_id column');
         }
+
+        // Create notes table if not exists
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS notes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NOT NULL,
+                content TEXT NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_notes_user_id (user_id),
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        `);
     } catch (err) {
         console.error('Failed to initialize database:', err.message);
     }

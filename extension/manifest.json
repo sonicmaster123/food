@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "生活管家 - 随记快捷保存",
+  "version": "1.0",
+  "description": "Ctrl+Shift+K 快捷保存选中文字到随记",
+  "permissions": ["storage", "activeTab"],
+  "commands": {
+    "save-to-notes": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Command+Shift+K"
+      },
+      "description": "保存选中文字到随记"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

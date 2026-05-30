@@ -586,6 +586,48 @@
             color: #fff;
         }
 
+        /* Note item styles */
+        .note-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 16px 18px;
+            border-radius: 12px;
+            border: 1.5px solid #f0f0f0;
+            transition: all 0.2s;
+        }
+
+        .note-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .note-content {
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .note-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .note-meta {
+            font-size: 12px;
+            color: #999;
+            display: flex;
+            gap: 12px;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 6px;
+        }
+
         @media (max-width: 768px) {
             .nav-bar {
                 flex-direction: column;
@@ -815,6 +857,7 @@
             <div class="nav-tabs" id="nav-tabs">
                 <button class="nav-tab active" data-page="food" onclick="switchPage('food')">🥗 食物管理</button>
                 <button class="nav-tab" data-page="password" onclick="switchPage('password')">🔐 密码管理</button>
+                <button class="nav-tab" data-page="notes" onclick="switchPage('notes')">📝 随记</button>
                 <button class="nav-tab" data-page="users" onclick="switchPage('users')" id="nav-users" style="display:none;">👥 用户管理</button>
             </div>
             <div class="nav-right">
@@ -960,6 +1003,45 @@
             </div>
         </div><!-- end page-password -->
 
+        <div class="page-content" id="page-notes" style="display:none;">
+            <header>
+                <h1>📝 随记</h1>
+                <p>快速记录灵感和想法，Ctrl+Shift+K 快捷保存选中文字</p>
+            </header>
+
+            <div class="stats-bar" style="grid-template-columns: repeat(2, 1fr);">
+                <div class="stat-card total">
+                    <div class="number" id="note-stat-total">0</div>
+                    <div class="label">总记录数</div>
+                </div>
+                <div class="stat-card fresh">
+                    <div class="number" id="note-stat-today">0</div>
+                    <div class="label">今日新增</div>
+                </div>
+            </div>
+
+            <div class="add-section">
+                <h2>➕ 新建随记</h2>
+                <div class="form-group">
+                    <textarea id="note-content" placeholder="在这里写下你的想法..." style="width:100%; min-height:100px; padding:12px 14px; border:1.5px solid #e0e0e0; border-radius:8px; font-size:14px; resize:vertical; outline:none; font-family:inherit; transition:border-color 0.2s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e0e0e0'"></textarea>
+                </div>
+                <div style="margin-top: 12px; display: flex; gap: 8px;">
+                    <button class="btn-add" onclick="saveNote()">保存</button>
+                    <button class="btn-add" style="background: #eee; color: #666;" onclick="cancelEditNote()" id="btn-cancel-note" hidden>取消编辑</button>
+                </div>
+            </div>
+
+            <div class="list-section">
+                <div class="list-header">
+                    <h2>📋 记录列表</h2>
+                    <div class="toolbar">
+                        <input type="text" class="search-box" id="note-search-input" placeholder="搜索随记..." oninput="renderNoteList()">
+                    </div>
+                </div>
+                <div class="food-list" id="note-list"></div>
+            </div>
+        </div><!-- end page-notes -->
+
         <div class="page-content" id="page-users" style="display:none;">
             <header>
                 <h1>👥 用户管理</h1>
@@ -1022,6 +1104,10 @@
         let currentFilter = 'all';
         let authToken = localStorage.getItem('auth_token');
         let currentUser = null;
+        let passwords = [];
+        let editingPasswordId = null;
+        let notes = [];
+        let editingNoteId = null;
 
         const categoryIcons = {
             dairy: '🥛', meat: '🥩', vegetable: '🥬', fruit: '🍎',
@@ -1102,6 +1188,8 @@
             localStorage.removeItem('auth_token');
             passwords = [];
             editingPasswordId = null;
+            notes = [];
+            editingNoteId = null;
             document.getElementById('main-app').style.display = 'none';
             document.getElementById('login-page').style.display = 'flex';
             document.getElementById('login-username').value = '';
@@ -1131,6 +1219,8 @@
         function showApp() {
             passwords = [];
             editingPasswordId = null;
+            notes = [];
+            editingNoteId = null;
             document.getElementById('login-page').style.display = 'none';
             document.getElementById('main-app').style.display = 'block';
             document.getElementById('nav-username').textContent = currentUser.username;
@@ -1428,12 +1518,11 @@
                 tab.classList.toggle('active', tab.dataset.page === page);
             });
             if (page === 'password') loadPasswords();
+            if (page === 'notes') loadNotes();
             if (page === 'users') loadUsers();
         }
 
         // Password Manager
-        let passwords = [];
-        let editingPasswordId = null;
 
         const appDomainMap = {
             '微信': 'weixin.qq.com', 'wechat': 'weixin.qq.com',
@@ -1672,6 +1761,174 @@
                 }
             }
         }
+
+        // Notes Manager
+
+        async function loadNotes() {
+            try {
+                const res = await fetch('/api/notes', { headers: authHeaders() });
+                notes = await res.json();
+                renderNoteList();
+                updateNoteStats();
+            } catch (e) {
+                showNotification('加载随记列表失败', 'error');
+            }
+        }
+
+        function updateNoteStats() {
+            document.getElementById('note-stat-total').textContent = notes.length;
+            const today = new Date().toISOString().slice(0, 10);
+            const todayCount = notes.filter(n => n.createdAt && n.createdAt.slice(0, 10) === today).length;
+            document.getElementById('note-stat-today').textContent = todayCount;
+        }
+
+        function renderNoteList() {
+            const list = document.getElementById('note-list');
+            const search = document.getElementById('note-search-input').value.trim().toLowerCase();
+
+            let filtered = notes;
+            if (search) {
+                filtered = notes.filter(n =>
+                    n.content.toLowerCase().includes(search) ||
+                    (n.ownerName && n.ownerName.toLowerCase().includes(search))
+                );
+            }
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📝</div>
+                        <p>暂无随记</p>
+                    </div>`;
+                return;
+            }
+
+            const isAdmin = currentUser && currentUser.role === 'admin';
+            list.innerHTML = filtered.map(item => {
+                const time = item.createdAt ? item.createdAt.slice(0, 16).replace('T', ' ') : '';
+                return `
+                <div class="note-item">
+                    <div class="note-content">${escapeHtml(item.content)}</div>
+                    <div class="note-footer">
+                        <div class="note-meta">
+                            <span>${time}</span>
+                            ${isAdmin && item.ownerName ? '<span>👤 ' + escapeHtml(item.ownerName) + '</span>' : ''}
+                        </div>
+                        <div class="note-actions">
+                            <button class="btn-action btn-edit" onclick="editNote(${item.id})">✏️ 编辑</button>
+                            <button class="btn-action btn-delete" onclick="deleteNote(${item.id})">删除</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function saveNote() {
+            const textarea = document.getElementById('note-content');
+            const content = textarea.value.trim();
+
+            if (!content) { showNotification('请输入内容', 'error'); return; }
+
+            try {
+                if (editingNoteId) {
+                    const res = await fetch(`/api/notes/${editingNoteId}`, {
+                        method: 'PUT',
+                        headers: authHeaders(),
+                        body: JSON.stringify({ content })
+                    });
+                    if (res.status === 403) { showNotification('无权限修改此随记', 'error'); return; }
+                    if (!res.ok) throw new Error('Server error');
+                    const idx = notes.findIndex(n => n.id === editingNoteId);
+                    if (idx !== -1) {
+                        notes[idx].content = content;
+                        notes[idx].updatedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                    }
+                    showNotification('随记已更新', 'success');
+                } else {
+                    const res = await fetch('/api/notes', {
+                        method: 'POST',
+                        headers: authHeaders(),
+                        body: JSON.stringify({ content })
+                    });
+                    if (!res.ok) throw new Error('Server error');
+                    const data = await res.json();
+                    notes.unshift(data);
+                    showNotification('随记已保存', 'success');
+                }
+                cancelEditNote();
+                renderNoteList();
+                updateNoteStats();
+            } catch (e) {
+                showNotification('保存失败，请重试', 'error');
+            }
+        }
+
+        function editNote(id) {
+            const item = notes.find(n => n.id === id);
+            if (!item) return;
+
+            editingNoteId = id;
+            document.getElementById('note-content').value = item.content;
+            document.getElementById('btn-cancel-note').hidden = false;
+            document.getElementById('note-content').focus();
+        }
+
+        function cancelEditNote() {
+            editingNoteId = null;
+            document.getElementById('note-content').value = '';
+            document.getElementById('btn-cancel-note').hidden = true;
+        }
+
+        async function deleteNote(id) {
+            const item = notes.find(n => n.id === id);
+            if (!item) return;
+            const preview = item.content.length > 20 ? item.content.slice(0, 20) + '...' : item.content;
+            if (!confirm(`确定要删除这条随记吗？\n「${preview}」`)) return;
+            try {
+                const res = await fetch(`/api/notes/${id}`, { method: 'DELETE', headers: authHeaders() });
+                if (res.status === 403) { showNotification('无权限删除此随记', 'error'); return; }
+                if (!res.ok) throw new Error('Server error');
+                notes = notes.filter(n => n.id !== id);
+                renderNoteList();
+                updateNoteStats();
+                showNotification('随记已删除', 'warning');
+            } catch (e) {
+                showNotification('删除失败', 'error');
+            }
+        }
+
+        // Ctrl+Shift+K: save selected text as a note
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.shiftKey && e.key === 'K') {
+                e.preventDefault();
+                const selectedText = window.getSelection().toString().trim();
+                if (!selectedText) {
+                    showNotification('请先选中要保存的文字', 'info');
+                    return;
+                }
+                if (!authToken) {
+                    showNotification('请先登录', 'error');
+                    return;
+                }
+                fetch('/api/notes', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ content: selectedText })
+                }).then(res => {
+                    if (!res.ok) throw new Error('Server error');
+                    return res.json();
+                }).then(data => {
+                    notes.unshift(data);
+                    if (document.getElementById('page-notes').style.display !== 'none') {
+                        renderNoteList();
+                        updateNoteStats();
+                    }
+                    showNotification('选中文字已保存到随记', 'success');
+                }).catch(() => {
+                    showNotification('保存失败', 'error');
+                });
+            }
+        });
 
         // User Management
         let users = [];

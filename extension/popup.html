@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: 300px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 16px;
+            background: #f8f9fa;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        .header h1 {
+            font-size: 16px;
+            color: #1a1a2e;
+        }
+        .header p {
+            font-size: 12px;
+            color: #888;
+            margin-top: 4px;
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
+            font-size: 12px;
+            color: #555;
+            font-weight: 500;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            border-color: #667eea;
+        }
+        .btn {
+            width: 100%;
+            padding: 8px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-logout {
+            background: #fff;
+            color: #e74c3c;
+            border: 1.5px solid #e0e0e0;
+            margin-top: 8px;
+        }
+        .btn-logout:hover {
+            background: #fde8e8;
+            border-color: #e74c3c;
+        }
+        .status {
+            text-align: center;
+            padding: 12px;
+            background: #e8f8f0;
+            border-radius: 8px;
+            color: #27ae60;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .error {
+            background: #fde8e8;
+            color: #e74c3c;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-bottom: 12px;
+            display: none;
+        }
+        .tip {
+            margin-top: 12px;
+            padding: 10px;
+            background: #fff;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #666;
+            border: 1px solid #eee;
+            line-height: 1.5;
+        }
+        .tip kbd {
+            background: #eee;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 11px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📝 生活管家 · 随记</h1>
+        <p>快捷保存选中文字</p>
+    </div>
+
+    <div id="login-section">
+        <div class="error" id="error-msg"></div>
+        <div class="form-group">
+            <label>服务器地址</label>
+            <input type="text" id="server" value="http://localhost:3000" placeholder="http://localhost:3000">
+        </div>
+        <div class="form-group">
+            <label>用户名</label>
+            <input type="text" id="username" placeholder="请输入用户名">
+        </div>
+        <div class="form-group">
+            <label>密码</label>
+            <input type="password" id="password" placeholder="请输入密码">
+        </div>
+        <button class="btn" id="btn-login">登录</button>
+    </div>
+
+    <div id="logged-section" style="display:none;">
+        <div class="status" id="status-text">已登录</div>
+        <div class="tip">
+            在任意网页中选中文字，按 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd> 即可快速保存到随记。
+        </div>
+        <button class="btn btn-logout" id="btn-logout">退出登录</button>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
